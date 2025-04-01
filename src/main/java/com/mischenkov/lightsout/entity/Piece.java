@@ -11,12 +11,11 @@ public class Piece {
     }
 
     public Piece(String line) {
-        int[][] result = Arrays.stream(line.split(","))
+        this.pieceMatrix = Arrays.stream(line.split(","))
                 .map(str -> str.chars()
                         .map(ch -> ch == 88 ? 1 : 0)
                         .toArray())
                 .toArray(int[][]::new);
-        this.pieceMatrix = result;
     }
 
     public int[][] getPieceMatrix() {

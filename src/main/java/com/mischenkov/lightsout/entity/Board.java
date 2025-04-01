@@ -34,13 +34,13 @@ public class Board {
         int pieceWidth = piece.getPieceMatrix()[0].length;
         int pieceHeight = piece.getPieceMatrix().length;
 
-        return position.getX() + pieceWidth <= boardMatrix[0].length && position.getY() + pieceHeight <= boardMatrix.length;
+        return position.x() + pieceWidth <= boardMatrix[0].length && position.y() + pieceHeight <= boardMatrix.length;
     }
 
     public Board placePiece(Piece piece, Position position) {
         if (!isEmbedPiece(piece, position)) {
             var exceptionMsg = String.format("The piece is outside the board. Incorrect coordinates (%d, %d).",
-                    position.getX(), position.getY());
+                    position.x(), position.y());
             throw new IllegalArgumentException(exceptionMsg);
         }
         
@@ -49,8 +49,8 @@ public class Board {
         for (int y = 0; y < pieceMatrix.length; y++) {
             for (int x = 0; x < pieceMatrix[y].length; x++) {
                 if (pieceMatrix[y][x] == 1) {
-                    var currentX = x + position.getX();
-                    var currentY = y + position.getY();
+                    var currentX = x + position.x();
+                    var currentY = y + position.y();
 
                     resultMatrix[currentY][currentX] += 1;
                     resultMatrix[currentY][currentX] %= depth;
