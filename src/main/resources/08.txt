@@ -1,0 +1,3 @@
+2
+100000,011101,101100,110000,011000
+.X,XX,X. XXX XXX,XX. .X.,.X.,.X.,XXX,.X. X.,XX,XX .X.,XXX,X.. X...,XXXX X..,X..,XXX,.X. XXX,.X.,.X. .X.,.X.,XX.,.XX .X,XX,X. X.XXX,XXX.. XX.,.X.,.X.,.XX .X,XX,.X X.,X.,XX
