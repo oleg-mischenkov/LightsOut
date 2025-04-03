@@ -49,16 +49,12 @@ public class App {
 
         List<Position> solutionList = new ArrayList<>(pieceList.size());
 
-        var t1 = System.currentTimeMillis();
         if (solveParallel(initialBoard, pieceList, solutionList)) {
             var solution = solutionList.stream().map(Position::toString).collect(Collectors.joining(" "));
             System.out.println(solution);
         } else {
             System.out.println("No solution");
         }
-        var t2 = System.currentTimeMillis();
-        var dtSec = ((t2 -t1) / 1000) <= 0 ? (t2 -t1) + " ms." : ((t2 -t1) / 1000) + " s.";
-        System.out.println("Time: " + dtSec);
     }
 
     public static int calculateMatrixIntersectionWeight(int[][] m1, int[][] m2, int x, int y) {
