@@ -47,83 +47,17 @@ public class App {
         var t2 = System.currentTimeMillis();
         var dtSec = (t2 -t1) / 1000;
         System.out.println("Time: " + dtSec);
-
-        // trace
-
-        var board = initialBoard;
-        for (int i = 0; i < solutionList.size(); i++) {
-            var pos = solutionList.get(i);
-            var piece = pieceList.get(i);
-            System.out.println("Step " + (i+1) );
-            System.out.println(board);
-            System.out.println("+");
-            System.out.println(piece + "\n### " + pos);
-            Board finalBoard = board;
-            var posPos = posPosition(board, piece);
-            PriorityQueue<PriorityPosition> positionDeque = new PriorityQueue<>(posPos.size());
-            posPos.forEach(el -> {
-                var posWidth = calculate(finalBoard.getBoardMatrix(), piece.getPieceMatrix(), el.x(), el.y());
-                positionDeque.add(new PriorityPosition(el, posWidth));
-            });
-            // natural set
-            IntStream.range(0, posPos.size()).forEach(index -> {
-                var el = posPos.get(index);
-                var posWidth = calculate(finalBoard.getBoardMatrix(), piece.getPieceMatrix(), el.x(), el.y());
-                var line = String.format("[%d](%d, %d)=%d | ", index + 1, el.x(), el.y(), posWidth);
-                System.out.print(line);
-            });
-            System.out.println();
-
-            // max fun
-            IntStream.range(0, positionDeque.size()).forEach(index -> {
-                var quePosition = positionDeque.remove();
-                var priorityLine = String.format("[%d](%d, %d)=%d | ",
-                        index + 1, quePosition.x(), quePosition.y(), quePosition.getPriority());
-                System.out.print(priorityLine);
-            });
-            System.out.println();
-
-            // new
-            IntStream.range(0, posPos.size()).forEach(index -> {
-                var curPosition = posPos.get(index);
-                var map = countOccurrences(finalBoard.placePiece(piece, curPosition).getBoardMatrix());
-                var line = String.format("[%d](%d, %d)->%s | ", index + 1, curPosition.x(), curPosition.y(), map);
-                System.out.print(line);
-            });
-            System.out.println();
-
-            board = board.placePiece(piece, pos);
-            System.out.println("=");
-            System.out.println(board);
-            System.out.println("----------------------");
-        }
-    }
-
-    public static Map<Integer, Integer> countOccurrences(int[][] array) {
-        Map<Integer, Integer> occurrences = new HashMap<>();
-
-        for (int[] row : array) {
-            for (int num : row) {
-                occurrences.put(num, occurrences.getOrDefault(num, 0) + 1);
-            }
-        }
-
-        return occurrences;
     }
 
     public static int calculate(int[][] m1, int[][] m2, int x, int y) {
         int sum = 0;
-
-        // Проходим по всем элементам меньшей матрицы (m2)
         for (int m2y = 0; m2y < m2.length; m2y++) {
             for (int m2x = 0; m2x < m2[m2y].length; m2x++) {
-                // Вычисляем соответствующие координаты в большой матрице (m1)
                 int m1Row = y + m2y;
                 int m1Col = x + m2x;
                 sum += m1[m1Row][m1Col] + m2[m2y][m2x];
             }
         }
-
         return sum;
     }
 
@@ -200,6 +134,7 @@ public class App {
             return isSolved(board);
         }
 
+        // weight prediction
         Piece currentPiece = pieces.get(step);
         int[][] matrix = board.getBoardMatrix();
 
