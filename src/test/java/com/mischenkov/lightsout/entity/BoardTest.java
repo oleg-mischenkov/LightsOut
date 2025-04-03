@@ -5,6 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class BoardTest {
 
     @Test
@@ -24,7 +30,7 @@ class BoardTest {
 
         // then
         for (int i = 0; i < boardMatrix.length; i++) {
-            Assertions.assertArrayEquals(expectedMatrix[i], boardMatrix[i]);
+            assertArrayEquals(expectedMatrix[i], boardMatrix[i]);
         }
     }
 
@@ -50,7 +56,7 @@ class BoardTest {
         var result = board.isEmbedPiece(piece, position);
 
         // then
-        Assertions.assertEquals(expected, result);
+        assertEquals(expected, result);
     }
 
     @Test
@@ -66,7 +72,7 @@ class BoardTest {
                 () -> board.placePiece(piece, position));
 
         // then
-        Assertions.assertEquals(expected, exception.getMessage());
+        assertEquals(expected, exception.getMessage());
     }
 
     @ParameterizedTest
@@ -85,6 +91,29 @@ class BoardTest {
         var result = board.placePiece(piece, position);
 
         // then
-        Assertions.assertEquals(expectedBoard, result);
+        assertEquals(expectedBoard, result);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2, '00,00', 'X|X.', '3|1|3|1'",
+            "2, '000,000', 'XX|.X', '1|3|3|1|3|3'",
+            "3, '00', 'X|X', '3|3'"
+    })
+    void shouldComputeCorrectCoverageMasks_computeCoverageMasksTest(int depth, String boardVector, String pieceVectors, String expectedMasksStr) {
+        // given
+        var board = new Board(depth, boardVector);
+        var pieces = Arrays.stream(pieceVectors.split("\\|"))
+                .map(Piece::new)
+                .collect(Collectors.toList());
+        var expectedMasks = Arrays.stream(expectedMasksStr.split("\\|"))
+                .mapToLong(Long::parseLong)
+                .toArray();
+
+        // when
+        var resultMasks = board.computeCoverageMasks(pieces);
+
+        // then
+        assertArrayEquals(expectedMasks, resultMasks);
     }
 }

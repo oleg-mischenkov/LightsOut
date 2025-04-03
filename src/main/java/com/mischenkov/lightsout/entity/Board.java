@@ -1,6 +1,7 @@
 package com.mischenkov.lightsout.entity;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -28,6 +29,37 @@ public class Board {
             System.arraycopy(boardMatrix[y], 0, result[y], 0, boardMatrix[y].length);
         }
         return result;
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public long[] computeCoverageMasks(List<Piece> pieces) {
+        int boardHeight = this.boardMatrix.length;
+        int boardWidth = this.boardMatrix[0].length;
+        int totalPieces = pieces.size();
+        long[] coverageMasks = new long[boardHeight * boardWidth];
+
+        for (int p = 0; p < totalPieces; p++) {
+            Piece piece = pieces.get(p);
+            int[][] pieceMatrix = piece.getPieceMatrix();
+            int h = pieceMatrix.length;
+            int w = pieceMatrix[0].length;
+            for (int y = 0; y <= boardHeight - h; y++) {
+                for (int x = 0; x <= boardWidth - w; x++) {
+                    for (int i = 0; i < h; i++) {
+                        for (int j = 0; j < w; j++) {
+                            if (pieceMatrix[i][j] == 1) {
+                                int cellIndex = (y + i) * boardWidth + (x + j);
+                                coverageMasks[cellIndex] |= (1L << p);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return coverageMasks;
     }
 
     public boolean isEmbedPiece(Piece piece, Position position) {
