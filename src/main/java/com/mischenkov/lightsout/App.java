@@ -9,7 +9,11 @@ import com.mischenkov.lightsout.entity.PriorityPosition;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,9 +24,18 @@ public class App {
     private static volatile boolean solutionFound = false;
 
     public static void main(String[] args) {
+        if(args.length == 0) {
+            System.out.println("""
+                    No file name
+                    try:
+                        java -jar lightsout <file name>
+                    """);
+            return;
+        }
+
         Board initialBoard;
         List<Piece> pieceList;
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/02.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(args[0]))) {
             var boardDepth = Integer.parseInt(reader.readLine().trim());
             var boardVector = reader.readLine().trim();
             var pieceVector = reader.readLine().trim();
@@ -38,8 +51,8 @@ public class App {
 
         var t1 = System.currentTimeMillis();
         if (solveParallel(initialBoard, pieceList, solutionList)) {
-            solutionList.forEach(pos -> System.out.print(pos.x() + "," + pos.y() + " "));
-            System.out.println();
+            var solution = solutionList.stream().map(Position::toString).collect(Collectors.joining(" "));
+            System.out.println(solution);
         } else {
             System.out.println("No solution");
         }
@@ -48,7 +61,7 @@ public class App {
         System.out.println("Time: " + dtSec);
     }
 
-    public static int calculate(int[][] m1, int[][] m2, int x, int y) {
+    public static int calculateMatrixIntersectionWeight(int[][] m1, int[][] m2, int x, int y) {
         int sum = 0;
         for (int m2y = 0; m2y < m2.length; m2y++) {
             for (int m2x = 0; m2x < m2[m2y].length; m2x++) {
@@ -77,6 +90,28 @@ public class App {
         return result;
     }
 
+    private static boolean isPromising(Board board, long[] coverageMasks, long remainingMask) {
+        int[][] matrix = board.getBoardMatrix();
+        int boardHeight = matrix.length;
+        int boardWidth = matrix[0].length;
+        int depth = board.getDepth();
+
+        for (int y = 0; y < boardHeight; y++) {
+            for (int x = 0; x < boardWidth; x++) {
+                int current = matrix[y][x];
+                int stepsToZero = (depth - current) % depth;
+                if (stepsToZero < 0) stepsToZero += depth;
+                int cellIndex = y * boardWidth + x;
+                long coverage = coverageMasks[cellIndex] & remainingMask;
+                int pieceNumberForPosition = Long.bitCount(coverage);
+                if ((pieceNumberForPosition == 0 && current != 0) || (stepsToZero > pieceNumberForPosition)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private static boolean solveParallel(Board board, List<Piece> pieces, List<Position> solutionList) {
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<List<Position>>> futures = new ArrayList<>();
@@ -84,25 +119,27 @@ public class App {
         int[][] matrix = board.getBoardMatrix();
         int boardHeight = matrix.length;
         int boardWidth = matrix[0].length;
-
+        long[] coverageMasks = board.computeCoverageMasks(pieces);
+        long initialRemainingMask = (1L << pieces.size()) - 1;
 
         for (int y = 0; y < boardHeight; y++) {
             for (int x = 0; x < boardWidth; x++) {
                 Position pos = new Position(x, y);
                 if (board.isEmbedPiece(firstPiece, pos)) {
                     Board newBoard = board.placePiece(firstPiece, pos);
-
                     List<Position> partialSolution = new ArrayList<>();
                     partialSolution.add(pos);
-                    // # start step 1
-                    Future<List<Position>> future = executor.submit(() -> {
-                        if (solve(1, newBoard, pieces, partialSolution)) {
-                            return partialSolution;
-                        } else {
-                            return null;
-                        }
-                    });
-                    futures.add(future);
+                    long newRemainingMask = initialRemainingMask & ~(1L << 0);
+                    if (isPromising(newBoard, coverageMasks, newRemainingMask)) {
+                        Future<List<Position>> future = executor.submit(() -> {
+                            if (solve(1, newBoard, pieces, partialSolution, coverageMasks, newRemainingMask)) {
+                                return partialSolution;
+                            } else {
+                                return null;
+                            }
+                        });
+                        futures.add(future);
+                    }
                 }
             }
         }
@@ -124,7 +161,7 @@ public class App {
         return false;
     }
 
-    private static boolean solve(int step, Board board, List<Piece> pieces, List<Position> solutionList) {
+    private static boolean solve(int step, Board board, List<Piece> pieces, List<Position> solutionList, long[] coverageMasks, long remainingMask) {
         if (solutionFound) {
             return true;
         }
@@ -133,14 +170,14 @@ public class App {
             return isSolved(board);
         }
 
-        // weight prediction
         Piece currentPiece = pieces.get(step);
         int[][] matrix = board.getBoardMatrix();
 
         List<PriorityPosition> positionList = posPosition(board, currentPiece).stream()
                 .map(position -> {
-                    var currentPositionWeight = calculate(matrix, currentPiece.getPieceMatrix(), position.x(), position.y());
-                    return new PriorityPosition(position, currentPositionWeight);})
+                    var currentPositionWeight = calculateMatrixIntersectionWeight(matrix, currentPiece.getPieceMatrix(), position.x(), position.y());
+                    return new PriorityPosition(position, currentPositionWeight);
+                })
                 .collect(Collectors.toUnmodifiableList());
         Queue<PriorityPosition> positionDeque = new PriorityQueue<>(positionList);
 
@@ -150,11 +187,14 @@ public class App {
             }
             Position pos = positionDeque.remove();
             Board newBoard = board.placePiece(currentPiece, pos);
-            solutionList.add(pos);
-            if (solve(step + 1, newBoard, pieces, solutionList)) {
-                return true;
+            long newRemainingMask = remainingMask & ~(1L << step);
+            if (isPromising(newBoard, coverageMasks, newRemainingMask)) {
+                solutionList.add(pos);
+                if (solve(step + 1, newBoard, pieces, solutionList, coverageMasks, newRemainingMask)) {
+                    return true;
+                }
+                solutionList.remove(solutionList.size() - 1);
             }
-            solutionList.remove(solutionList.size() - 1);
         }
         return false;
     }

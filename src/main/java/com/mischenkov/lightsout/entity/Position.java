@@ -13,10 +13,7 @@ public class Position {
 
     @Override
     public String toString() {
-        return "Position{" +
-                "x=" + x +
-                ", y=" + y +
-                '}';
+        return x + "," + y;
     }
 
     public int x() {
@@ -40,5 +37,6 @@ public class Position {
     public int hashCode() {
         return Objects.hash(x, y);
     }
+
 
 }
