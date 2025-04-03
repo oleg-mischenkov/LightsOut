@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class App {
@@ -22,7 +23,7 @@ public class App {
     public static void main(String[] args) {
         Board initialBoard;
         List<Piece> pieceList;
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/08.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/02.txt"))) {
             var boardDepth = Integer.parseInt(reader.readLine().trim());
             var boardVector = reader.readLine().trim();
             var pieceVector = reader.readLine().trim();
@@ -176,24 +177,25 @@ public class App {
 
         Piece currentPiece = pieces.get(step);
         int[][] matrix = board.getBoardMatrix();
-        int boardHeight = matrix.length;
-        int boardWidth = matrix[0].length;
 
-        for (int y = 0; y < boardHeight; y++) {
-            for (int x = 0; x < boardWidth; x++) {
-                if (solutionFound) {
-                    return true;
-                }
-                Position pos = new Position(x, y);
-                if (board.isEmbedPiece(currentPiece, pos)) {
-                    Board newBoard = board.placePiece(currentPiece, pos);
-                    solutionList.add(pos);
-                    if (solve(step + 1, newBoard, pieces, solutionList)) {
-                        return true;
-                    }
-                    solutionList.remove(solutionList.size() - 1);
-                }
+        List<PriorityPosition> positionList = posPosition(board, currentPiece).stream()
+                .map(position -> {
+                    var currentPositionWeight = calculate(matrix, currentPiece.getPieceMatrix(), position.x(), position.y());
+                    return new PriorityPosition(position, currentPositionWeight);})
+                .collect(Collectors.toUnmodifiableList());
+        Queue<PriorityPosition> positionDeque = new PriorityQueue<>(positionList);
+
+        while (!positionDeque.isEmpty()) {
+            if (solutionFound) {
+                return true;
             }
+            Position pos = positionDeque.remove();
+            Board newBoard = board.placePiece(currentPiece, pos);
+            solutionList.add(pos);
+            if (solve(step + 1, newBoard, pieces, solutionList)) {
+                return true;
+            }
+            solutionList.remove(solutionList.size() - 1);
         }
         return false;
     }
