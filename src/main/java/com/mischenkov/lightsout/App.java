@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class App {
     private static volatile boolean solutionFound = false;
@@ -23,7 +22,7 @@ public class App {
     public static void main(String[] args) {
         Board initialBoard;
         List<Piece> pieceList;
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/04.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/02.txt"))) {
             var boardDepth = Integer.parseInt(reader.readLine().trim());
             var boardVector = reader.readLine().trim();
             var pieceVector = reader.readLine().trim();
