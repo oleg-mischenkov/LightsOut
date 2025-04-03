@@ -57,7 +57,7 @@ public class App {
             System.out.println("No solution");
         }
         var t2 = System.currentTimeMillis();
-        var dtSec = (t2 -t1) / 1000;
+        var dtSec = ((t2 -t1) / 1000) <= 0 ? (t2 -t1) + " ms." : ((t2 -t1) / 1000) + " s.";
         System.out.println("Time: " + dtSec);
     }
 
