@@ -23,7 +23,7 @@ public class App {
     public static void main(String[] args) {
         Board initialBoard;
         List<Piece> pieceList;
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/02.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/resources/04.txt"))) {
             var boardDepth = Integer.parseInt(reader.readLine().trim());
             var boardVector = reader.readLine().trim();
             var pieceVector = reader.readLine().trim();
@@ -65,6 +65,7 @@ public class App {
                 var posWidth = calculate(finalBoard.getBoardMatrix(), piece.getPieceMatrix(), el.x(), el.y());
                 positionDeque.add(new PriorityPosition(el, posWidth));
             });
+            // natural set
             IntStream.range(0, posPos.size()).forEach(index -> {
                 var el = posPos.get(index);
                 var posWidth = calculate(finalBoard.getBoardMatrix(), piece.getPieceMatrix(), el.x(), el.y());
@@ -72,6 +73,8 @@ public class App {
                 System.out.print(line);
             });
             System.out.println();
+
+            // max fun
             IntStream.range(0, positionDeque.size()).forEach(index -> {
                 var quePosition = positionDeque.remove();
                 var priorityLine = String.format("[%d](%d, %d)=%d | ",
@@ -79,11 +82,33 @@ public class App {
                 System.out.print(priorityLine);
             });
             System.out.println();
+
+            // new
+            IntStream.range(0, posPos.size()).forEach(index -> {
+                var curPosition = posPos.get(index);
+                var map = countOccurrences(finalBoard.placePiece(piece, curPosition).getBoardMatrix());
+                var line = String.format("[%d](%d, %d)->%s | ", index + 1, curPosition.x(), curPosition.y(), map);
+                System.out.print(line);
+            });
+            System.out.println();
+
             board = board.placePiece(piece, pos);
             System.out.println("=");
             System.out.println(board);
             System.out.println("----------------------");
         }
+    }
+
+    public static Map<Integer, Integer> countOccurrences(int[][] array) {
+        Map<Integer, Integer> occurrences = new HashMap<>();
+
+        for (int[] row : array) {
+            for (int num : row) {
+                occurrences.put(num, occurrences.getOrDefault(num, 0) + 1);
+            }
+        }
+
+        return occurrences;
     }
 
     public static int calculate(int[][] m1, int[][] m2, int x, int y) {
